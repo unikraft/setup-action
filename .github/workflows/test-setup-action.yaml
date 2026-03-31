@@ -6,19 +6,9 @@ on:
   pull_request:
     branches:
     - main
-    paths:
-    - action.yml
-    - README.md
-    - LICENSE.md
-    - '.github/workflows/test-setup-action.yaml'
   push:
     branches:
     - main
-    paths:
-    - action.yml
-    - README.md
-    - LICENSE.md
-    - '.github/workflows/test-setup-action.yaml'
   workflow_dispatch:
 
 concurrency:
@@ -29,7 +19,7 @@ jobs:
   setup-action-install:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Install Unikraft CLI (default)
         uses: ./
@@ -59,7 +49,7 @@ jobs:
       - name: Install Unikraft CLI (pinned)
         uses: ./
         with:
-          version: 0.2.0
+          version: 0.2.1
       - name: Capture pinned version
         shell: bash
         run: |
@@ -116,27 +106,32 @@ jobs:
             exit 1
           fi
 
-          if [[ "${pinned_version}" != *"0.2.0"* ]]; then
-            echo "Expected pinned version 0.2.0 in output: ${pinned_output}" >&2
+          if [[ "${pinned_version}" != *"0.2.1"* ]]; then
+            echo "Expected pinned version 0.2.1 in output: ${pinned_output}" >&2
             exit 1
           fi
 
   setup-action-login:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Install Unikraft CLI (login)
-        if: ${{ github.event_name == 'push' || !github.event.pull_request.head.repo.fork }}
         uses: ./
         with:
           version: dev
           token: ${{ secrets.UKC_TOKEN }}
+          organization: ${{ secrets.UKC_USER }}
       - name: Verify login with metro list
-        if: ${{ github.event_name == 'push' || !github.event.pull_request.head.repo.fork }}
         shell: bash
+        env:
+          UKC_TOKEN: ${{ secrets.UKC_TOKEN }}
         run: |
           set -euo pipefail
+          if [[ -z "${UKC_TOKEN}" ]]; then
+            echo "Skipping login verification: UKC_TOKEN is not set"
+            exit 0
+          fi
           metros="$(unikraft metro list -oquiet)"
           echo "${metros}"
           if [[ -z "${metros}" ]]; then
