@@ -2,7 +2,7 @@ name: setup-action
 description: Install the Unikraft CLI from GitHub releases
 inputs:
   version:
-    description: Version to install (latest, dev, or a release tag)
+    description: Version to install (latest/stable, dev/staging, or a release tag)
     required: false
     default: latest
   github-token:
@@ -38,29 +38,10 @@ runs:
           VERSION="latest"
         fi
 
-        if [[ "${VERSION}" == "latest" ]]; then
-          tag=""
-          api_err="$(mktemp)"
-          if latest_json="$(gh api "repos/${REPO}/releases/latest" 2>"${api_err}")"; then
-            tag="$(echo "${latest_json}" | jq -r '.tag_name // empty')"
-            if [[ -z "${tag}" || "${tag}" == "null" ]]; then
-              rm -f "${api_err}"
-              echo "No latest release tag found in repository ${REPO}." >&2
-              exit 1
-            fi
-          else
-            err_msg="$(cat "${api_err}")"
-            rm -f "${api_err}"
-            if [[ -z "${err_msg}" ]]; then
-              err_msg="unknown error"
-            fi
-            echo "Failed to fetch latest release from ${REPO}: ${err_msg}" >&2
-            exit 1
-          fi
-          rm -f "${api_err}"
-        elif [[ "${VERSION}" == "dev" ]]; then
-          releases="$(gh release list -R "${REPO}" --limit 100 --json tagName,isDraft,isPrerelease)"
-          tag="$(echo "${releases}" | jq -r '[.[] | select(.isDraft == false and .isPrerelease == true)][0].tagName // empty')"
+        if [[ "${VERSION}" == "latest" || "${VERSION}" == "stable" ]]; then
+          tag="$(curl -fsSL "https://pkg.unikraft.com/endpoints/cli/content/stable.txt" | tr -d '\r\n')"
+        elif [[ "${VERSION}" == "dev" || "${VERSION}" == "staging" ]]; then
+          tag="$(curl -fsSL "https://pkg.unikraft.com/endpoints/cli/content/staging.txt" | tr -d '\r\n')"
         else
           if [[ "${VERSION}" =~ ^v ]]; then
             tag="${VERSION}"

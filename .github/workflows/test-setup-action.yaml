@@ -37,6 +37,15 @@ jobs:
         run: |
           unikraft version | tee "${RUNNER_TEMP}/unikraft-version-latest.txt"
 
+      - name: Install Unikraft CLI (stable)
+        uses: ./
+        with:
+          version: stable
+      - name: Capture stable version
+        shell: bash
+        run: |
+          unikraft version | tee "${RUNNER_TEMP}/unikraft-version-stable.txt"
+
       - name: Install Unikraft CLI (dev)
         uses: ./
         with:
@@ -45,6 +54,15 @@ jobs:
         shell: bash
         run: |
           unikraft version | tee "${RUNNER_TEMP}/unikraft-version-dev.txt"
+
+      - name: Install Unikraft CLI (staging)
+        uses: ./
+        with:
+          version: staging
+      - name: Capture staging version
+        shell: bash
+        run: |
+          unikraft version | tee "${RUNNER_TEMP}/unikraft-version-staging.txt"
 
       - name: Install Unikraft CLI (pinned)
         uses: ./
@@ -60,10 +78,12 @@ jobs:
         run: |
           default_output="$(cat "${RUNNER_TEMP}/unikraft-version-default.txt")"
           latest_output="$(cat "${RUNNER_TEMP}/unikraft-version-latest.txt")"
+          stable_output="$(cat "${RUNNER_TEMP}/unikraft-version-stable.txt")"
           dev_output="$(cat "${RUNNER_TEMP}/unikraft-version-dev.txt")"
+          staging_output="$(cat "${RUNNER_TEMP}/unikraft-version-staging.txt")"
           pinned_output="$(cat "${RUNNER_TEMP}/unikraft-version-pinned.txt")"
 
-          if [[ -z "${default_output}" || -z "${latest_output}" || -z "${dev_output}" || -z "${pinned_output}" ]]; then
+          if [[ -z "${default_output}" || -z "${latest_output}" || -z "${stable_output}" || -z "${dev_output}" || -z "${staging_output}" || -z "${pinned_output}" ]]; then
             echo "One or more version outputs are empty" >&2
             exit 1
           fi
@@ -89,11 +109,15 @@ jobs:
 
           default_version="$(extract_version "Default" "${default_output}")"
           latest_version="$(extract_version "Latest" "${latest_output}")"
+          stable_version="$(extract_version "Stable" "${stable_output}")"
           dev_version="$(extract_version "Dev" "${dev_output}")"
+          staging_version="$(extract_version "Staging" "${staging_output}")"
           pinned_version="$(extract_version "Pinned" "${pinned_output}")"
           echo "Default version: ${default_version}"
           echo "Latest version:  ${latest_version}"
+          echo "Stable version:  ${stable_version}"
           echo "Dev version:     ${dev_version}"
+          echo "Staging version: ${staging_version}"
           echo "Pinned version:  ${pinned_version}"
 
           if [[ "${default_version}" != "${latest_version}" ]]; then
@@ -101,8 +125,18 @@ jobs:
             exit 1
           fi
 
+          if [[ "${latest_version}" != "${stable_version}" ]]; then
+            echo "Expected latest and stable versions to match: latest=${latest_version} stable=${stable_version}" >&2
+            exit 1
+          fi
+
           if [[ "${dev_version}" != *-* ]]; then
             echo "Expected dev version to be a prerelease: ${dev_version}" >&2
+            exit 1
+          fi
+
+          if [[ "${dev_version}" != "${staging_version}" ]]; then
+            echo "Expected dev and staging versions to match: dev=${dev_version} staging=${staging_version}" >&2
             exit 1
           fi
 
