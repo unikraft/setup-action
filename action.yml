@@ -29,7 +29,7 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs['github-token'] || github.token }}
-        REPO: "unikraft/cli"
+        REPO: "unikraft-cloud/cli"
         VERSION: ${{ inputs.version }}
       run: |
         set -euo pipefail
@@ -77,7 +77,7 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs['github-token'] || github.token }}
-        REPO: "unikraft/cli"
+        REPO: "unikraft-cloud/cli"
         TAG: ${{ steps.resolve.outputs.tag }}
       run: |
         set -euo pipefail
