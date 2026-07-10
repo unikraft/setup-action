@@ -39,9 +39,9 @@ runs:
         fi
 
         if [[ "${VERSION}" == "latest" || "${VERSION}" == "stable" ]]; then
-          tag="$(curl -fsSL "https://pkg.unikraft.com/endpoints/cli/content/stable.txt" | tr -d '\r\n')"
+          tag="$(curl -fsSL --retry 3 --retry-all-errors "https://pkg.unikraft.com/endpoints/cli/content/stable.txt" | tr -d '\r\n')"
         elif [[ "${VERSION}" == "dev" || "${VERSION}" == "staging" ]]; then
-          tag="$(curl -fsSL "https://pkg.unikraft.com/endpoints/cli/content/staging.txt" | tr -d '\r\n')"
+          tag="$(curl -fsSL --retry 3 --retry-all-errors "https://pkg.unikraft.com/endpoints/cli/content/staging.txt" | tr -d '\r\n')"
         else
           if [[ "${VERSION}" =~ ^v ]]; then
             tag="${VERSION}"
